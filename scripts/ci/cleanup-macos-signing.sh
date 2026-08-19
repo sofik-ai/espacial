@@ -8,6 +8,19 @@ fi
 keychain_path="$RUNNER_TEMP/espacial-signing.keychain-db"
 certificate_path="$RUNNER_TEMP/espacial-signing.p12"
 private_key_path="$RUNNER_TEMP/espacial-notary-key.p8"
+search_list_path="$RUNNER_TEMP/espacial-original-keychains.txt"
+
+if [[ -f "$search_list_path" ]]; then
+  original_keychains=()
+  while IFS= read -r original_keychain; do
+    if [[ -n "$original_keychain" ]]; then
+      original_keychains+=("$original_keychain")
+    fi
+  done < "$search_list_path"
+  if [[ ${#original_keychains[@]} -gt 0 ]]; then
+    security list-keychains -d user -s "${original_keychains[@]}"
+  fi
+fi
 
 case "$keychain_path" in
   "$RUNNER_TEMP"/espacial-signing.keychain-db)
@@ -19,4 +32,4 @@ case "$keychain_path" in
     ;;
 esac
 
-/bin/rm -f "$certificate_path" "$private_key_path"
+/bin/rm -f "$certificate_path" "$private_key_path" "$search_list_path"

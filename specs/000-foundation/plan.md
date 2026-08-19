@@ -39,6 +39,7 @@ Sem rede de produto e sem segredos no repositório. Tags publicam checksums e
 binários; o macOS permanece explicitamente unsigned quando as categorias de
 secrets não existem. Quando presentes, certificado e chave notarial só vivem em
 arquivos/keychain efêmeros do runner e são limpos mesmo após falha.
+O aplicativo macOS usa o bundle identifier `ai.sofik.espacial`.
 
 ## Rollback
 

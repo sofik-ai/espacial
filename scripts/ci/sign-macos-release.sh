@@ -19,14 +19,26 @@ fi
 mkdir -p signed-work secured-assets
 ditto -x -k --norsrc --noextattr "${archives[0]}" signed-work
 
-for binary in signed-work/espacial/espacial-server signed-work/espacial/espacial-desktop; do
-  codesign --force --options runtime --timestamp --keychain "$ESPACIAL_SIGNING_KEYCHAIN" --sign "$MACOS_SIGNING_IDENTITY" "$binary"
-  codesign --verify --strict --verbose=0 "$binary"
-done
+app_bundle="signed-work/Espacial.app"
+server_binary="$app_bundle/Contents/Helpers/espacial-server"
+if [[ ! -d "$app_bundle" || ! -f "$server_binary" ]]; then
+  echo "error: unsigned archive does not contain the expected app bundle" >&2
+  exit 1
+fi
 
-printf 'signing=developer-id\n' >> signed-work/espacial/BUILD-INFO.txt
+sed -i '' 's/^signing=.*/signing=developer-id/' "$app_bundle/Contents/Resources/BUILD-INFO.txt"
+codesign --force --options runtime --timestamp --keychain "$ESPACIAL_SIGNING_KEYCHAIN" --sign "$MACOS_SIGNING_IDENTITY" "$server_binary"
+codesign --force --options runtime --timestamp --keychain "$ESPACIAL_SIGNING_KEYCHAIN" --sign "$MACOS_SIGNING_IDENTITY" "$app_bundle"
+codesign --verify --deep --strict --verbose=0 "$app_bundle"
+
+bundle_identifier="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$app_bundle/Contents/Info.plist")"
+if [[ "$bundle_identifier" != "ai.sofik.espacial" ]]; then
+  echo "error: unexpected macOS bundle identifier" >&2
+  exit 1
+fi
+
 asset="secured-assets/espacial-${version}-macos-arm64-signed.zip"
-COPYFILE_DISABLE=1 ditto -c -k --norsrc --noextattr --keepParent signed-work/espacial "$asset"
+COPYFILE_DISABLE=1 ditto -c -k --norsrc --noextattr --keepParent "$app_bundle" "$asset"
 
 {
   echo "signed=true"

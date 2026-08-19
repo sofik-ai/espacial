@@ -7,7 +7,9 @@
 - Uma tag `vMAJOR.MINOR.PATCH` que corresponda à versão do workspace dispara
   `release.yml`.
 - Linux é compilado para `x86_64-unknown-linux-gnu` e empacotado como `.tar.gz`.
-- macOS é compilado para `aarch64-apple-darwin` e empacotado como `.zip`.
+- macOS é compilado para `aarch64-apple-darwin` e empacotado como
+  `Espacial.app` dentro de um `.zip`. O bundle identifier canônico é
+  `ai.sofik.espacial`.
 - Cada arquivo tem um `.sha256`; o nome macOS indica `unsigned`, `signed` ou
   `notarized` sem ambiguidade.
 - O job final tem a única permissão `contents: write` do fluxo e cria a GitHub
@@ -27,9 +29,10 @@ valores em argumentos de CLI, arquivos versionados ou logs.
 | `MACOS_CERTIFICATE_PASSWORD` | senha de exportação do `.p12` |
 | `MACOS_SIGNING_IDENTITY` | seletor exato da identidade Developer ID Application |
 
-O runner cria um keychain efêmero sem alterar o keychain padrão, libera a chave
-somente para `codesign`, assina com hardened runtime e timestamp, verifica ambos os
-binários e apaga keychain/certificado em um passo `always()`.
+O runner cria um keychain efêmero sem alterar o keychain padrão, preserva e restaura
+a search list original, libera a chave somente para `codesign`, assina com hardened
+runtime e timestamp, verifica o app e apaga keychain/certificado em um passo
+`always()`.
 
 ## Secrets opcionais de notarização
 
@@ -42,10 +45,8 @@ Use uma chave de API do App Store Connect com o menor acesso capaz de notarizar:
 | `MACOS_NOTARY_ISSUER_ID` | identificador do issuer |
 
 Com as três categorias e a assinatura configuradas, `notarytool` submete o ZIP e
-espera aceitação. O estágio atual distribui binários CLI em ZIP: o ticket pode ser
-consultado online, mas não pode ser grampeado diretamente em um executável. Quando
-o desktop virar `.app`, `.pkg` ou `.dmg`, adicione stapling e avaliação Gatekeeper
-antes de substituir este empacotamento.
+espera aceitação. O workflow grampeia o ticket em `Espacial.app`, valida o ticket e
+executa a avaliação Gatekeeper antes de empacotar o asset notarizado final.
 
 ## Procedimento de release
 

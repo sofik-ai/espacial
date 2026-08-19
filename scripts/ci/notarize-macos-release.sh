@@ -29,7 +29,23 @@ if ! xcrun notarytool submit "${archives[0]}" \
 fi
 
 notarized_asset="${archives[0]%-signed.zip}-notarized.zip"
-mv "${archives[0]}" "$notarized_asset"
+app_bundle="signed-work/Espacial.app"
+stapled=false
+for _attempt in 1 2 3 4 5 6; do
+  if xcrun stapler staple "$app_bundle" >/dev/null 2>&1; then
+    stapled=true
+    break
+  fi
+  sleep 10
+done
+if [[ "$stapled" != true ]]; then
+  echo "error: notarization ticket could not be stapled" >&2
+  exit 1
+fi
+xcrun stapler validate "$app_bundle" >/dev/null
+spctl --assess --type execute --verbose=0 "$app_bundle"
+COPYFILE_DISABLE=1 ditto -c -k --norsrc --noextattr --keepParent "$app_bundle" "$notarized_asset"
+/bin/rm -f "${archives[0]}"
 {
   echo "notarized=true"
   echo "asset=$notarized_asset"
