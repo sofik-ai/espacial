@@ -1,0 +1,198 @@
+name: Release
+
+on:
+  push:
+    tags: ["v[0-9]+.[0-9]+.[0-9]+"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  verify:
+    name: Verify release source
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Require a matching version tag
+        run: ./scripts/verify-release-tag.sh "${GITHUB_REF_NAME}"
+      - name: Install Rust toolchain
+        run: rustup toolchain install stable --profile minimal --component clippy,rustfmt
+      - name: Cache Cargo downloads
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+          key: cargo-release-verify-${{ runner.os }}-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}
+          restore-keys: cargo-release-verify-${{ runner.os }}-
+      - name: Run quality gates
+        run: ./scripts/check.sh
+
+  build:
+    name: Build ${{ matrix.platform }}
+    needs: verify
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            target: x86_64-unknown-linux-gnu
+            platform: linux-x86_64
+            format: tar.gz
+          - os: macos-15
+            target: aarch64-apple-darwin
+            platform: macos-arm64-unsigned
+            format: zip
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install Rust target
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup target add "${{ matrix.target }}"
+      - name: Cache Cargo downloads
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+          key: cargo-release-${{ matrix.target }}-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}
+          restore-keys: cargo-release-${{ matrix.target }}-
+      - name: Build locked release binaries
+        run: cargo build --workspace --release --locked --target "${{ matrix.target }}"
+      - name: Package unsigned binaries
+        run: >-
+          ./scripts/package-release.sh
+          "target/${{ matrix.target }}/release"
+          "release-assets"
+          "${GITHUB_REF_NAME}"
+          "${{ matrix.platform }}"
+          "${{ matrix.format }}"
+          "unsigned"
+      - name: Upload build artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: espacial-${{ matrix.platform }}
+          path: release-assets/*
+          if-no-files-found: error
+          retention-days: 14
+
+  sign_macos:
+    name: Sign and optionally notarize macOS
+    needs: build
+    runs-on: macos-15
+    timeout-minutes: 30
+    outputs:
+      signed: ${{ steps.sign.outputs.signed }}
+      notarized: ${{ steps.notarize.outputs.notarized }}
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Detect configured secret categories
+        id: config
+        env:
+          MACOS_CERTIFICATE_P12: ${{ secrets.MACOS_CERTIFICATE_P12 }}
+          MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+          MACOS_SIGNING_IDENTITY: ${{ secrets.MACOS_SIGNING_IDENTITY }}
+          MACOS_NOTARY_PRIVATE_KEY: ${{ secrets.MACOS_NOTARY_PRIVATE_KEY }}
+          MACOS_NOTARY_KEY_ID: ${{ secrets.MACOS_NOTARY_KEY_ID }}
+          MACOS_NOTARY_ISSUER_ID: ${{ secrets.MACOS_NOTARY_ISSUER_ID }}
+        run: ./scripts/ci/detect-macos-release-secrets.sh
+      - name: Download unsigned macOS build
+        if: steps.config.outputs.signing_ready == 'true'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: espacial-macos-arm64-unsigned
+          path: unsigned-input
+      - name: Import identity into an ephemeral keychain
+        if: steps.config.outputs.signing_ready == 'true'
+        env:
+          MACOS_CERTIFICATE_P12: ${{ secrets.MACOS_CERTIFICATE_P12 }}
+          MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+          MACOS_SIGNING_IDENTITY: ${{ secrets.MACOS_SIGNING_IDENTITY }}
+        run: ./scripts/ci/import-macos-signing-certificate.sh
+      - name: Sign and package macOS binaries
+        id: sign
+        if: steps.config.outputs.signing_ready == 'true'
+        env:
+          MACOS_SIGNING_IDENTITY: ${{ secrets.MACOS_SIGNING_IDENTITY }}
+        run: ./scripts/ci/sign-macos-release.sh "${GITHUB_REF_NAME}"
+      - name: Notarize signed archive
+        id: notarize
+        if: steps.sign.outputs.signed == 'true' && steps.config.outputs.notarization_ready == 'true'
+        env:
+          MACOS_NOTARY_PRIVATE_KEY: ${{ secrets.MACOS_NOTARY_PRIVATE_KEY }}
+          MACOS_NOTARY_KEY_ID: ${{ secrets.MACOS_NOTARY_KEY_ID }}
+          MACOS_NOTARY_ISSUER_ID: ${{ secrets.MACOS_NOTARY_ISSUER_ID }}
+        run: ./scripts/ci/notarize-macos-release.sh
+      - name: Checksum secured macOS archive
+        if: steps.sign.outputs.signed == 'true'
+        run: ./scripts/checksum-release-assets.sh secured-assets
+      - name: Upload secured macOS artifact
+        if: steps.sign.outputs.signed == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: espacial-macos-arm64-secured
+          path: secured-assets/*
+          if-no-files-found: error
+          retention-days: 14
+      - name: Clean ephemeral signing material
+        if: always()
+        run: ./scripts/ci/cleanup-macos-signing.sh
+
+  publish:
+    name: Publish GitHub Release
+    needs: [build, sign_macos]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Download Linux artifact
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: espacial-linux-x86_64
+          path: release-assets
+      - name: Download secured macOS artifact
+        if: needs.sign_macos.outputs.signed == 'true'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: espacial-macos-arm64-secured
+          path: release-assets
+      - name: Download unsigned macOS artifact
+        if: needs.sign_macos.outputs.signed != 'true'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: espacial-macos-arm64-unsigned
+          path: release-assets
+      - name: Create immutable release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" release-assets/* \
+            --repo "${GITHUB_REPOSITORY}" \
+            --verify-tag \
+            --title "Espacial ${GITHUB_REF_NAME}" \
+            --generate-notes \
+            --notes "Initial engineering foundation. macOS asset names state whether signing/notarization was available."

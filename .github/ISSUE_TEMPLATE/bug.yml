@@ -1,0 +1,35 @@
+name: Bug
+description: Registre reprodução, impacto e evidência antes da correção.
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: textarea
+    id: observed
+    attributes:
+      label: Comportamento observado
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Comportamento esperado
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reprodução mínima
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidência sem dados sensíveis
+      description: Logs sanitizados, versão, ambiente e primeira divergência conhecida.
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severidade
+      options: [S4 - low, S3 - moderate, S2 - high, S1 - critical]
+    validations:
+      required: true

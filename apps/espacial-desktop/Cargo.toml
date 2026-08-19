@@ -1,0 +1,15 @@
+[package]
+name = "espacial-desktop"
+description = "Desktop client runtime for Espacial"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+espacial-protocol = { path = "../../crates/espacial-protocol" }
+serde_json.workspace = true
+
+[lints]
+workspace = true

@@ -1,0 +1,45 @@
+name: Iniciativa / feature
+description: Inicie descoberta e uma spec rastreável.
+title: "[Feature]: "
+labels: [feature, discovery]
+body:
+  - type: markdown
+    attributes:
+      value: Antes da implementação, crie `specs/NNN-slug/` a partir dos templates.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problema e usuários
+      description: Descreva a necessidade sem prescrever a solução.
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Resultado observável
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Escopo e não objetivos
+    validations:
+      required: true
+  - type: input
+    id: spec
+    attributes:
+      label: Caminho da spec
+      placeholder: specs/NNN-slug/spec.md (TBD durante triagem)
+    validations:
+      required: true
+  - type: dropdown
+    id: risk
+    attributes:
+      label: Risco inicial
+      options: [Low, Medium, High, Critical]
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidência e perguntas abertas

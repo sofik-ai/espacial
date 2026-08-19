@@ -1,0 +1,44 @@
+name: Tarefa de implementação
+description: Unidade pequena ligada a uma spec e a um TASK ID.
+title: "[TASK-NNN]: "
+labels: [task]
+body:
+  - type: input
+    id: task_id
+    attributes:
+      label: Spec e TASK ID
+      placeholder: specs/001-example/tasks.md#task-001
+    validations:
+      required: true
+  - type: input
+    id: requirements
+    attributes:
+      label: Requisitos e cenários
+      placeholder: REQ-001; SCN-001
+    validations:
+      required: true
+  - type: dropdown
+    id: role
+    attributes:
+      label: Papel dono
+      options: [Orchestration, Specification, Architecture, Rust/backend, Desktop, Quality, Security/release]
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Escopo e fora do escopo
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependências
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Critérios de aceite e verificação
+    validations:
+      required: true

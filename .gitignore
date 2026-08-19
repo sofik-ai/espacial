@@ -1,0 +1,12 @@
+/target/
+/.idea/
+/.vscode/
+.DS_Store
+*.swp
+*.swo
+*.pem
+*.p12
+*.key
+.env
+.env.*
+!.env.example

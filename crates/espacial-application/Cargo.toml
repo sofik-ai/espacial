@@ -1,0 +1,15 @@
+[package]
+name = "espacial-application"
+description = "Application use cases and ports for Espacial"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+espacial-domain = { path = "../espacial-domain" }
+espacial-protocol = { path = "../espacial-protocol" }
+
+[lints]
+workspace = true

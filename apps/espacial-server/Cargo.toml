@@ -1,0 +1,18 @@
+[package]
+name = "espacial-server"
+description = "Background server runtime and composition root for Espacial"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+espacial-application = { path = "../../crates/espacial-application" }
+espacial-domain = { path = "../../crates/espacial-domain" }
+espacial-infrastructure = { path = "../../crates/espacial-infrastructure" }
+serde_json.workspace = true
+uuid.workspace = true
+
+[lints]
+workspace = true
