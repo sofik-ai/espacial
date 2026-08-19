@@ -31,6 +31,7 @@ assinatura e notarização.
 - `crates/espacial-infrastructure`: adaptadores concretos das portas.
 - `apps/espacial-server`: composition root do servidor de fundo.
 - `apps/espacial-desktop`: composition root do cliente; depende apenas do protocolo.
+- `assets/`: marca canônica e ícones gerados para macOS, Linux e web.
 - `docs/`: constituição, arquitetura, papéis e operação.
 - `specs/`: artefatos por iniciativa e templates do fluxo.
 

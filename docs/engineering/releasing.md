@@ -7,9 +7,10 @@
 - Uma tag `vMAJOR.MINOR.PATCH` que corresponda à versão do workspace dispara
   `release.yml`.
 - Linux é compilado para `x86_64-unknown-linux-gnu` e empacotado como `.tar.gz`.
+  O pacote leva a entrada desktop e os ícones hicolor SVG/PNG sob `share/`.
 - macOS é compilado para `aarch64-apple-darwin` e empacotado como
   `Espacial.app` dentro de um `.zip`. O bundle identifier canônico é
-  `ai.sofik.espacial`.
+  `ai.sofik.espacial` e o bundle incorpora `Espacial.icns`.
 - Cada arquivo tem um `.sha256`; o nome macOS indica `unsigned`, `signed` ou
   `notarized` sem ambiguidade.
 - O job final tem a única permissão `contents: write` do fluxo e cria a GitHub
@@ -58,3 +59,17 @@ executa a avaliação Gatekeeper antes de empacotar o asset notarizado final.
 
 Tags, releases e assets existentes são imutáveis por política; corrija uma falha
 com uma nova versão em vez de sobrescrever artefatos publicados.
+
+## Ícones da aplicação
+
+O SVG canônico versionado em `assets/brand/espacial-mark.svg` gera os assets de
+macOS, Linux e web. A geração é deliberadamente feita no macOS com `sips` e
+`iconutil`, mas os resultados são versionados e verificados em todos os runners:
+
+```sh
+./scripts/generate-icons.sh
+./scripts/verify-icon-assets.sh
+```
+
+Não edite rasterizações isoladamente. Uma atualização de marca deve substituir o
+SVG canônico após aprovação e regenerar todo o conjunto.

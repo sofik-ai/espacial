@@ -11,6 +11,7 @@ output_directory="$2"
 version="$3"
 signing_state="$4"
 bundle_identifier="ai.sofik.espacial"
+application_icon="assets/icons/macos/Espacial.icns"
 
 if [[ ! "$version" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
   echo "error: version must be vMAJOR.MINOR.PATCH" >&2
@@ -24,6 +25,11 @@ for binary in espacial-server espacial-desktop; do
   fi
 done
 
+if [[ ! -f "$application_icon" ]]; then
+  echo "error: missing application icon $application_icon" >&2
+  exit 1
+fi
+
 mkdir -p "$output_directory"
 output_directory="$(cd "$output_directory" && pwd)"
 staging_directory="$(mktemp -d "${TMPDIR:-/tmp}/espacial-macos.XXXXXX")"
@@ -33,6 +39,7 @@ mkdir -p "$app_root/Contents/Helpers" "$app_root/Contents/MacOS" "$app_root/Cont
 
 cp "$binary_directory/espacial-desktop" "$app_root/Contents/MacOS/espacial-desktop"
 cp "$binary_directory/espacial-server" "$app_root/Contents/Helpers/espacial-server"
+cp "$application_icon" "$app_root/Contents/Resources/Espacial.icns"
 chmod 755 "$app_root/Contents/MacOS/espacial-desktop" "$app_root/Contents/Helpers/espacial-server"
 
 cat > "$app_root/Contents/Info.plist" <<PLIST
@@ -46,6 +53,8 @@ cat > "$app_root/Contents/Info.plist" <<PLIST
   <string>espacial-desktop</string>
   <key>CFBundleIdentifier</key>
   <string>${bundle_identifier}</string>
+  <key>CFBundleIconFile</key>
+  <string>Espacial.icns</string>
   <key>CFBundleInfoDictionaryVersion</key>
   <string>6.0</string>
   <key>CFBundleName</key>

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Espacial
+Comment=Collaborative AI workspace
+Exec=espacial-desktop
+Icon=ai.sofik.espacial
+Terminal=false
+Categories=Development;Utility;
+StartupNotify=true

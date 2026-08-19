@@ -40,6 +40,19 @@
   Apple, quando configurados, habilitam assinatura/notarização sem exposição.
 - Verificação: `./scripts/check.sh` e inspeção dos workflows.
 
+## TASK-004 — Identidade de aplicação nos artefatos
+
+- Status: Done
+- Papel dono: Desktop / Security/release
+- Issue/PR: TBD / TBD
+- Requisitos/cenários: REQ-004, REQ-005; SCN-003
+- Depende de: TASK-003
+- Escopo: ícones macOS/Linux, favicons e integração ao empacotamento.
+- Fora do escopo: UI funcional, instalador nativo e publicação web.
+- Critérios de aceite: bundle macOS declara ICNS; pacote Linux inclui desktop
+  entry e árvore hicolor; assets web têm SVG, ICO, PNGs e manifest.
+- Verificação: `./scripts/verify-icon-assets.sh` e inspeção dos pacotes locais.
+
 ## Revisões
 
 ### 1. Aderência à spec

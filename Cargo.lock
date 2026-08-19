@@ -16,7 +16,7 @@ checksum = "9330f8b2ff13f34540b44e946ef35111825727b38d33286ef986142615121801"
 
 [[package]]
 name = "espacial-application"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "espacial-domain",
  "espacial-protocol",
@@ -24,7 +24,7 @@ dependencies = [
 
 [[package]]
 name = "espacial-desktop"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "espacial-protocol",
  "serde_json",
@@ -32,21 +32,21 @@ dependencies = [
 
 [[package]]
 name = "espacial-domain"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "uuid",
 ]
 
 [[package]]
 name = "espacial-infrastructure"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "espacial-application",
 ]
 
 [[package]]
 name = "espacial-protocol"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "serde",
  "serde_json",
@@ -54,7 +54,7 @@ dependencies = [
 
 [[package]]
 name = "espacial-server"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "espacial-application",
  "espacial-domain",

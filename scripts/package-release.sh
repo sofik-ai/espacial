@@ -36,6 +36,18 @@ cp "$binary_directory/espacial-desktop" "$package_root/"
 chmod 755 "$package_root/espacial-server"
 chmod 755 "$package_root/espacial-desktop"
 
+if [[ "$platform" == linux-* ]]; then
+  desktop_identifier="ai.sofik.espacial"
+  mkdir -p "$package_root/share/applications" "$package_root/share/icons/hicolor/scalable/apps"
+  cp "assets/icons/linux/${desktop_identifier}.desktop" "$package_root/share/applications/"
+  cp "assets/icons/linux/${desktop_identifier}.svg" "$package_root/share/icons/hicolor/scalable/apps/"
+  for size in 16 32 48 64 128 256 512; do
+    icon_directory="$package_root/share/icons/hicolor/${size}x${size}/apps"
+    mkdir -p "$icon_directory"
+    cp "assets/icons/linux/${desktop_identifier}-${size}.png" "$icon_directory/${desktop_identifier}.png"
+  done
+fi
+
 {
   printf 'version=%s\n' "$version"
   printf 'platform=%s\n' "$platform"
